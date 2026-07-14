@@ -3,7 +3,7 @@ version: "3.9"
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: prism-postgres
+    container_name: prism-postgres-dev
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-prism}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-prism}
@@ -11,7 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_dev:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-prism}"]
       interval: 10s
@@ -20,11 +20,11 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: prism-redis
+    container_name: prism-redis-dev
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - redis_data_dev:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -35,13 +35,14 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.api
-    container_name: prism-api
+    container_name: prism-api-dev
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-prism}:${POSTGRES_PASSWORD:-prism}@postgres:5432/${POSTGRES_DB:-prism}
       REDIS_URL: redis://redis:6379/0
       SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production-min-32-chars}
-      ENVIRONMENT: ${ENVIRONMENT:-development}
-      APP_ENV: ${APP_ENV:-development}
+      ENVIRONMENT: development
+      APP_ENV: development
+      DEBUG: "true"
     ports:
       - "8000:8000"
     depends_on:
@@ -52,20 +53,22 @@ services:
     volumes:
       - ../src:/app/src
       - ../migrations:/app/migrations
+      - ../pyproject.toml:/app/pyproject.toml
     command: >
-      sh -c "alembic upgrade head && python -m uvicorn prism.interfaces.api.main:app --host 0.0.0.0 --port 8000"
+      sh -c "alembic upgrade head && python -m uvicorn prism.interfaces.api.main:app --host 0.0.0.0 --port 8000 --reload"
 
   worker:
     build:
       context: ..
       dockerfile: docker/Dockerfile.worker
-    container_name: prism-worker
+    container_name: prism-worker-dev
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-prism}:${POSTGRES_PASSWORD:-prism}@postgres:5432/${POSTGRES_DB:-prism}
       REDIS_URL: redis://redis:6379/0
       SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production-min-32-chars}
-      ENVIRONMENT: ${ENVIRONMENT:-development}
-      APP_ENV: ${APP_ENV:-development}
+      ENVIRONMENT: development
+      APP_ENV: development
+      DEBUG: "true"
     depends_on:
       postgres:
         condition: service_healthy
@@ -73,19 +76,21 @@ services:
         condition: service_healthy
     volumes:
       - ../src:/app/src
-    command: celery -A prism.infrastructure.celery.app worker --loglevel=info --concurrency=4
+      - ../pyproject.toml:/app/pyproject.toml
+    command: celery -A prism.infrastructure.celery.app worker --loglevel=debug --concurrency=2
 
   celery-beat:
     build:
       context: ..
       dockerfile: docker/Dockerfile.worker
-    container_name: prism-celery-beat
+    container_name: prism-celery-beat-dev
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-prism}:${POSTGRES_PASSWORD:-prism}@postgres:5432/${POSTGRES_DB:-prism}
       REDIS_URL: redis://redis:6379/0
       SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production-min-32-chars}
-      ENVIRONMENT: ${ENVIRONMENT:-development}
-      APP_ENV: ${APP_ENV:-development}
+      ENVIRONMENT: development
+      APP_ENV: development
+      DEBUG: "true"
     depends_on:
       postgres:
         condition: service_healthy
@@ -93,12 +98,13 @@ services:
         condition: service_healthy
     volumes:
       - ../src:/app/src
-    command: celery -A prism.infrastructure.celery.app beat --loglevel=info
+      - ../pyproject.toml:/app/pyproject.toml
+    command: celery -A prism.infrastructure.celery.app beat --loglevel=debug
 
 volumes:
-  postgres_data:
-  redis_data:
+  postgres_data_dev:
+  redis_data_dev:
 
 networks:
   default:
-    name: prism-network
+    name: prism-network-dev
