@@ -1,0 +1,78 @@
+[importlinter]
+root_package = prism
+
+[importlinter:contract:clean_architecture]
+type = layers
+layers = [
+    "prism.domain",
+    "prism.application",
+    "prism.infrastructure",
+    "prism.interfaces",
+]
+ignore_imports = [
+    "prism.domain.* -> prism.infrastructure.*",
+    "prism.domain.* -> prism.interfaces.*",
+    "prism.application.* -> prism.infrastructure.*",
+    "prism.application.* -> prism.interfaces.*",
+]
+
+[importlinter:contract:domain_isolation]
+type = forbidden
+source = prism.domain
+forbidden = [
+    "prism.infrastructure",
+    "prism.interfaces",
+    "prism.application",
+]
+
+[importlinter:contract:application_isolation]
+type = forbidden
+source = prism.application
+forbidden = [
+    "prism.infrastructure",
+    "prism.interfaces",
+]
+
+[importlinter:contract:infrastructure_implements_application]
+type = independence
+source = prism.infrastructure
+other = prism.interfaces
+
+[importlinter:contract:interfaces_depend_on_application]
+type = independence
+source = prism.interfaces
+other = prism.infrastructure
+
+[importlinter:contract:domain_bounded_contexts]
+type = independence
+modules = [
+    "prism.domain.portfolio",
+    "prism.domain.market",
+    "prism.domain.analytics",
+    "prism.domain.risk",
+]
+
+[importlinter:contract:no_circular_domain]
+type = layers
+layers = [
+    "prism.domain.portfolio.entities",
+    "prism.domain.portfolio.value_objects",
+    "prism.domain.portfolio.events",
+    "prism.domain.portfolio.repositories",
+    "prism.domain.portfolio.services",
+    "prism.domain.market.entities",
+    "prism.domain.market.value_objects",
+    "prism.domain.market.events",
+    "prism.domain.market.repositories",
+    "prism.domain.market.services",
+    "prism.domain.analytics.entities",
+    "prism.domain.analytics.value_objects",
+    "prism.domain.analytics.events",
+    "prism.domain.analytics.repositories",
+    "prism.domain.analytics.services",
+    "prism.domain.risk.entities",
+    "prism.domain.risk.value_objects",
+    "prism.domain.risk.events",
+    "prism.domain.risk.repositories",
+    "prism.domain.risk.services",
+]
