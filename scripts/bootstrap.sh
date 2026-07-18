@@ -11,8 +11,7 @@ echo
 
 # Check Python version
 PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
-REQUIRED_VERSION="3.12"
-if ! python3 -c "import sys; exit(import sys; sys.exit(0 if sys.version_info >= (3, 12) else 1))"; then
+if ! python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 12) else 1)"; then
     echo "Error: Python 3.12+ is required. Found: $PYTHON_VERSION"
     exit 1
 fi

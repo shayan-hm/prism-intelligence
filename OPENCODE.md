@@ -1,5 +1,19 @@
 # Prism Intelligence - OpenCode Configuration
 
+## AI Roles
+
+| AI | Role |
+|---|---|
+| Claude | Architect |
+| ChatGPT | Architect |
+| OpenCode | Implementation |
+| Gemini | Research Engineer |
+| Perplexity | Technology Intelligence |
+| DeepSeek | Rapid Debug Assistant |
+| NotebookLM | Knowledge Extraction |
+
+جزئیات در `brain/system/governance.md` و `brain/agents/*.md`.
+
 ## Coding Rules
 
 ### Architecture (MANDATORY - Never Violate)
@@ -12,20 +26,27 @@
    - Dependencies point INWARD only
 
 2. **Lightweight DDD with Bounded Contexts**
-   - Four bounded contexts: `portfolio`, `market`, `analytics`, `risk`
+   - Eight bounded contexts: `portfolio`, `market`, `risk`, `ingestion`, `strategy`, `backtesting`, `benchmark`, `shared_kernel`
    - Each context: `entities`, `value_objects`, `events`, `repositories`, `services`
    - Contexts communicate via domain events only
-   - Shared kernel in `domain.shared` only
+   - Shared kernel in `domain.shared_kernel`
 
 3. **Plugin-Based Market Extensibility**
    - Market data providers implement `MarketDataProvider` port
    - New providers added without modifying core domain
    - Adapters in `infrastructure.market_data.adapters`
 
-4. **Independent Engines**
-   - Ingestion, Backtesting, Portfolio, Risk engines are separate
-   - Each engine has its own application service
-   - Communicate via domain events
+4. **Independent Engines (exactly 4)**
+   - Ingestion Engine
+   - Backtesting Engine
+   - Portfolio & NAV Engine
+   - Risk Management Engine
+   - Strategy is a Bounded Context, NOT an engine (ADR-0002)
+
+5. **Separation of Alpha from Execution**
+   - Signal generation in `strategy`
+   - Execution simulation in `backtesting`
+   - No dependency from `strategy` to `backtesting`
 
 ### Code Quality
 
@@ -40,7 +61,7 @@
    - Use property-based testing for value objects
    - Test domain events and invariants
 
-3. **Formatting: Black + Ruff**
+3. **Formatting: Ruff**
    - Line length: 100
    - Double quotes
    - Run `ruff check . && ruff format .` before commit
@@ -68,27 +89,37 @@
 
 ```
 src/prism/
-├── domain/              # Pure domain logic (NO external deps)
-│   ├── portfolio/
+├── domain/                    # Pure domain logic (NO external deps)
+│   ├── shared_kernel/         # Shared domain primitives
+│   ├── market/                # Market data models (Candle, Symbol, Timeframe)
+│   ├── ingestion/             # Data ingestion domain
+│   ├── strategy/              # Signal generation (NOT an engine)
+│   ├── backtesting/           # Execution simulation
+│   ├── benchmark/             # Benchmark data (Gold, BTC, CPI)
+│   ├── portfolio/             # NAV, position accounting, performance
+│   └── risk/                  # Risk constraints and metrics
+├── application/               # Use cases, ports, DTOs
 │   ├── market/
-│   ├── analytics/
-│   ├── risk/
-│   └── shared/
-├── application/         # Use cases, ports, DTOs
+│   ├── ingestion/
+│   ├── strategy/
+│   ├── backtesting/
+│   ├── benchmark/
 │   ├── portfolio/
-│   ├── market/
-│   ├── analytics/
 │   └── risk/
-├── infrastructure/      # External implementations
-│   ├── persistence/
-│   ├── market_data/
-│   ├── celery/
-│   ├── api/
-│   └── config/
-└── interfaces/          # Entry points
-    ├── api/
+├── infrastructure/            # External implementations
+│   ├── db/                    # SQLAlchemy models, repositories
+│   ├── cache/                 # Redis caching
+│   ├── celery/                # Celery app and tasks
+│   ├── config/                # Pydantic Settings
+│   ├── messaging/             # Event bus / message broker
+│   └── market_data/           # Provider adapters
+│       ├── providers/
+│       └── adapters/
+└── interfaces/                # Entry points
+    ├── api/                   # FastAPI
     ├── cli/
-    └── workers/
+    ├── workers/
+    └── webhooks/
 ```
 
 ### Commands

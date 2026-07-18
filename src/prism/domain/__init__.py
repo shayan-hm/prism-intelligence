@@ -1,7 +1,8 @@
 """Prism Intelligence - Domain Layer.
 
 Pure domain logic with no external dependencies.
-Contains bounded contexts: portfolio, market, analytics, risk.
-"""
+Contains bounded contexts: shared_kernel, market, ingestion, strategy,
+backtesting, benchmark, portfolio, risk.
 
-__version__ = "0.1.0"
+See brain/knowledge/architecture/architecture-v1.md for full architecture details.
+"""

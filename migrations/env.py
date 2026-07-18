@@ -10,18 +10,24 @@ from sqlalchemy import engine_from_config, pool
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.prism.infrastructure.config import get_settings  # noqa: E402
-from src.prism.infrastructure.persistence.models.base import Base  # noqa: E402
+# NOTE: Base will be imported here once infrastructure/db/models is implemented.
+# For now, target_metadata is None until Phase 2 models are created.
+# from src.prism.infrastructure.db.models.base import Base
+# target_metadata = Base.metadata
+target_metadata = None
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-settings = get_settings()
-config.set_main_option("sqlalchemy.url", settings.database_url)
+try:
+    from src.prism.infrastructure.config import get_settings
 
-target_metadata = Base.metadata
+    settings = get_settings()
+    config.set_main_option("sqlalchemy.url", str(settings.database_url))
+except Exception:
+    pass  # Settings not available (e.g., offline generation)
 
 
 def run_migrations_offline() -> None:

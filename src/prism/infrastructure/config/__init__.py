@@ -97,9 +97,13 @@ class Settings(BaseSettings):
     aws_secret_access_key: str | None = None
 
     # Feature Flags
-    feature_analytics_enabled: bool = True
-    feature_risk_analytics_enabled: bool = True
     feature_market_data_enabled: bool = True
+    feature_ingestion_enabled: bool = True
+    feature_backtesting_enabled: bool = True
+    feature_strategy_enabled: bool = True
+    feature_benchmark_enabled: bool = True
+    feature_portfolio_enabled: bool = True
+    feature_risk_enabled: bool = True
     feature_notifications_enabled: bool = False
 
 
