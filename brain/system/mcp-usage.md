@@ -2,11 +2,33 @@
 
 ## نوع سرور
 
-یک سرور MCP عمومی filesystem/git، متصل به مسیر ریشهٔ ریپوی `prism-intelligence` (یا حداقل شامل مسیر `brain/`). این سرور enforcement داخلی ندارد — فقط read/write/git operations خام فراهم می‌کند. تمام قوانین (`governance.md`) صرفاً از طریق instruction به هر AI اجرا می‌شوند، نه از طریق کد سرور.
+دو گزینه برای دسترسی به Brain وجود دارد:
 
-## کانفیگ نمونه (Claude Desktop / سرورهای سازگار با MCP config استاندارد)
+### ۱. سرور MCP اختصاصی `tools/brain` (توصیه‌شده)
 
-از سرور رسمی filesystem و در صورت نیاز git استفاده کنید. نمونه:
+ابزار `tools/brain` یک MCP Server اختصاصی برای Prism Intelligence است که بخشی از قوانین governance را به‌صورت برنامه‌ای enforce می‌کند.
+
+**امکانات:**
+- ۱۴ ابزار MCP (خواندن، جستجو، ایجاد، ویرایش، حذف، جابجایی، patch اسناد + عملیات git)
+- Path traversal protection
+- محدودیت فایل به `.md`
+- Enforcement خودکار prefix `brain:` در commit
+
+**نصب و اجرا:**
+```bash
+cd tools/brain
+pip install -e .
+python -m brain.mcp.server
+```
+
+**ابزارهای ثبت‌شده:**
+- `read_brain`، `search_brain`، `get_context`، `list_documents`
+- `create_document`، `update_document`، `append_document`، `delete_document`، `move_document`، `apply_patch`
+- `git_status`، `git_diff`، `git_log`، `git_commit`
+
+### ۲. سرورهای MCP عمومی (fallback)
+
+اگر سرور اختصاصی در دسترس نبود، از سرورهای عمومی استفاده کنید:
 
 ```json
 {
@@ -31,17 +53,14 @@
 }
 ```
 
-- `server-filesystem` برای خواندن/نوشتن فایل‌های `brain/`.
-- `mcp-server-git` برای commit جداگانه (طبق قانون commit) — این سرور امکان `git add`, `git commit`, `git log`, `git diff` را از طریق MCP فراهم می‌کند.
+**هشدار:** سرورهای عمومی هیچ enforcement داخلی ندارند — تمام قوانین باید صرفاً از طریق instruction به AIها اجرا شوند.
 
-**نکته:** مسیر باید به ریشهٔ ریپو اشاره کند (نه فقط `brain/`)، چون commit جدا برای کد نیز از همین سرور انجام می‌شود.
+## Instruction اجباری که باید در system prompt هر AI درج شود
 
-## Instruction اجباری که باید در system prompt / project instructions هر AI درج شود
-
-این متن (یا معادل انگلیسی آن) باید در تنظیمات هر سه AI (Claude Project Instructions، ChatGPT Custom Instructions/System Prompt، OpenCode config) قرار گیرد:
+این متن (یا معادل انگلیسی آن) باید در تنظیمات هر AI قرار گیرد:
 
 ```
-قبل از هر کاری روی پروژهٔ Prism Intelligence، فایل‌های زیر را از طریق MCP بخوان:
+قبل از هر کاری روی پروژه Prism Intelligence، فایل‌های زیر را بخوان:
 1. brain/README.md
 2. brain/system/governance.md
 3. brain/knowledge/architecture/architecture-v1.md
@@ -55,6 +74,6 @@
 
 ## نکات عملیاتی
 
-- **بدون concurrency control خودکار:** اگر بیش از یک AI هم‌زمان روی یک فایل کار کند، مسئولیت هماهنگی با کاربر است (طبق تصمیم گرفته‌شده در طراحی اولیه).
-- **بدون PR/review اجباری:** commitها مستقیم روی برنچ `main` می‌روند. این یعنی audit فقط از طریق `git log --grep="^brain:"` یا بررسی دوره‌ای توسط کاربر ممکن است، نه از طریق gate خودکار.
-- **بررسی دوره‌ای پیشنهادی (نه اجباری):** کاربر می‌تواند به‌صورت دوره‌ای با `git log --oneline --grep="^brain:"` تغییرات brain را مرور کند تا از انباشته‌شدن تصمیمات نادیده‌گرفته‌شده جلوگیری شود.
+- **بدون concurrency control خودکار:** اگر بیش از یک AI هم‌زمان روی یک فایل کار کند، مسئولیت هماهنگی با کاربر است.
+- **بدون PR/review اجباری:** commitها مستقیم روی برنچ `main` می‌روند.
+- **بررسی دوره‌ای:** با `git log --oneline --grep="^brain:"` تغییرات brain را مرور کنید.
