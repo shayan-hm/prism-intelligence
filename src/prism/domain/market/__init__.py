@@ -9,5 +9,5 @@ __all__ = [
     "events",
     "repositories",
     "services",
-    "exceptions",
+
 ]

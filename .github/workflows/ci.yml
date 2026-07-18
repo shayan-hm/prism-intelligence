@@ -36,6 +36,9 @@ jobs:
       - name: Run mypy
         run: mypy src/
 
+      - name: Run import-linter
+        run: lint-imports
+
   test:
     name: Tests
     runs-on: ubuntu-latest
