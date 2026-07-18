@@ -6,7 +6,7 @@
 
 - محاسبه Position Sizing
 - محاسبه Exposure (نسبت سرمایه درگیر به کل سرمایه)
-- محاسبه Drawdown (ازピーک)
+- محاسبه Drawdown (از peak)
 - Enforce محدودیت‌های ریسک (Risk Limits)
 - بررسی Leverage
 - بررسی Concentration (تمرکز روی یک نماد یا بخش)
